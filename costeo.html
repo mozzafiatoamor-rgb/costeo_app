@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f0f1a">
+<title>Mozzafiato - Costeo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f0f1a;--surface:#1a1a2e;--surface2:#252540;--surface3:#2f2f4a;--accent:#8b5cf6;--green:#34d399;--red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;--orange:#ff6b35;--text:#e8e8f0;--text2:#9898b0;--radius:14px}
+html,body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100%;overflow:hidden;-webkit-text-size-adjust:100%}
+.status-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px 6px;background:var(--bg);position:sticky;top:0;z-index:100}
+.status-left{display:flex;align-items:center;gap:10px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 2s infinite}.status-dot.connected{background:var(--green)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.status-right{display:flex;align-items:center;gap:8px}
+.config-btn{background:var(--surface2);border:none;color:var(--text2);width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.main-content{height:calc(100vh - 52px - 70px);overflow-y:scroll;padding:0 16px 80px;-webkit-overflow-scrolling:touch}.main-content::-webkit-scrollbar{display:none}
+.card{background:var(--surface);border-radius:var(--radius);padding:20px;margin-bottom:14px;border:1px solid rgba(255,255,255,.04);animation:slideUp .3s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-box{background:var(--surface2);border-radius:12px;padding:16px;text-align:center;position:relative;overflow:hidden}
+.stat-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0}
+.stat-box.purple::before{background:var(--accent)}.stat-box.green::before{background:var(--green)}.stat-box.blue::before{background:var(--blue)}.stat-box.red::before{background:var(--red)}.stat-box.orange::before{background:var(--orange)}.stat-box.yellow::before{background:var(--yellow)}
+.stat-number{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;line-height:1}
+.stat-label{font-size:11px;color:var(--text2);margin-top:6px;text-transform:uppercase;letter-spacing:.5px}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid rgba(255,255,255,.06);display:flex;height:70px;padding-bottom:env(safe-area-inset-bottom);z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;color:var(--text2);font-size:9px;font-weight:500;cursor:pointer;position:relative;font-family:'DM Sans',sans-serif}
+.nav-item.active{color:var(--accent)}.nav-item.active::before{content:'';position:absolute;top:0;width:32px;height:3px;background:var(--accent);border-radius:0 0 3px 3px}
+.nav-icon{font-size:22px}
+.form-group{margin-bottom:16px}.form-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-input,.form-select{width:100%;padding:14px 16px;background:var(--surface2);border:1px solid rgba(255,255,255,.06);border-radius:10px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;-webkit-appearance:none}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--accent)}
+.form-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239898b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+.btn{padding:14px;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-weight:700;cursor:pointer;font-size:15px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--accent);color:#fff}.btn-success{background:var(--green);color:#000}.btn-secondary{background:var(--surface2);color:var(--text2)}.btn-sm{padding:8px 14px;font-size:12px;width:auto;border-radius:8px}
+.search-bar{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:10px;padding:0 14px;margin-bottom:14px}
+.search-bar input{flex:1;background:none;border:none;color:var(--text);padding:12px 0;font-size:14px;font-family:'DM Sans',sans-serif;outline:none}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-body{background:var(--surface);width:100%;max-width:500px;max-height:90vh;border-radius:24px 24px 0 0;padding:24px;overflow-y:auto;animation:slideModal .3s ease}
+@keyframes slideModal{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:16px;text-align:center}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--surface);color:var(--text);padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;border:1px solid rgba(52,211,153,.3);max-width:90vw;text-align:center}
+.toast.show{opacity:1}.toast.error{border-color:rgba(248,113,113,.3)}
+.pills{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;-webkit-overflow-scrolling:touch}.pills::-webkit-scrollbar{display:none}
+.pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;border:1px solid var(--surface3);background:var(--surface2);color:var(--text2)}
+.pill.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cost-item{background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.cost-name{font-size:14px;font-weight:500}.cost-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.cost-price{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;text-align:right}
+.cost-unit{font-size:10px;color:var(--text2);text-align:right}
+.meter{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;margin-top:6px}
+.meter-fill{height:100%;border-radius:3px;transition:width .3s}
+.tag{display:inline-flex;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;text-transform:uppercase}
+.tag.ok{background:rgba(52,211,153,.15);color:var(--green)}.tag.warn{background:rgba(251,191,36,.15);color:var(--yellow)}.tag.bad{background:rgba(248,113,113,.15);color:var(--red)}
+.detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px}
+.detail-row:last-child{border:none}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text2)}.empty-icon{font-size:48px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+<script>
+const SCRIPT_URL=localStorage.getItem('scriptUrl')||'';
+const S={
+  tab:'home',sheetId:localStorage.getItem('sheetId')||'',apiKey:localStorage.getItem('apiKey')||'',
+  connected:false,loading:false,searchQuery:'',catFilter:'todos',
+  catalogo:[],recetas:[],costos:[],precios:[],
+  modal:null,editCosto:null
+};
+
+const Sheets={
+  async read(sh,rg){const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${S.sheetId}/values/${encodeURIComponent(sh)}!${rg}?key=${S.apiKey}`);if(!r.ok)throw new Error(r.status);const d=await r.json();return d.values||[]},
+  async append(sh,v){const su=localStorage.getItem('scriptUrl')||'';const r=await fetch(su,{method:'POST',body:JSON.stringify({sheet:sh,values:v})});const d=await r.json();if(!d.success)throw new Error(d.error);return d},
+  async deleteRow(sh,row){const su=localStorage.getItem('scriptUrl')||'';const r=await fetch(su,{method:'POST',body:JSON.stringify({action:'delete',sheet:sh,row:row})});const d=await r.json();if(!d.success)throw new Error(d.error);return d},
+  async loadAll(){
+    S.loading=true;render();
+    try{
+      const c=await this.read('📦 Catálogo','A2:F200');
+      S.catalogo=c.map(r=>({id:r[0]||'',categoria:r[1]||'',producto:r[2]||'',stockMinimo:parseInt(r[3])||0,unidad:r[4]||'',activo:(r[5]||'SI').toString().trim().toUpperCase()})).filter(p=>p.producto&&p.activo!=='NO');
+
+      const rc=await this.read('🍽️ Recetas','A2:E500');
+      S.recetas=rc.map(r=>({platillo:r[0]||'',categoria:r[1]||'',ingrediente:r[2]||'',cantidad:parseFloat(r[3])||0,unidad:r[4]||''})).filter(r=>r.platillo&&r.ingrediente);
+
+      try{
+        const cs=await this.read('💲 Costos','A2:F200');
+        S.costos=cs.map(r=>({producto:r[0]||'',unidadCompra:r[1]||'',precioCompra:parseFloat(r[2])||0,cantidadPack:parseFloat(r[3])||1,costoUnitario:parseFloat(r[4])||0,fechaAct:r[5]||''})).filter(r=>r.producto);
+      }catch(e){S.costos=[]}
+
+      try{
+        const pm=await this.read('📋 Precios Menú','A2:D200');
+        S.precios=pm.map(r=>({platillo:r[0]||'',categoria:r[1]||'',precioVenta:parseFloat(r[2])||0,activo:(r[3]||'SI').toString().trim().toUpperCase()})).filter(r=>r.platillo);
+      }catch(e){S.precios=[]}
+
+      S.connected=true;
+    }catch(e){console.error(e);toast('Error al cargar',1);S.connected=false}
+    S.loading=false;render();
+  }
+};
+
+function toast(m,e){const t=document.getElementById('toast');t.textContent=(e?'⚠️ ':'✅ ')+m;t.className='toast show'+(e?' error':'');setTimeout(()=>t.className='toast',2500)}
+function today(){return new Date().toLocaleDateString('es-MX',{year:'numeric',month:'2-digit',day:'2-digit'})}
+function $(id){return document.getElementById(id)}
+function money(n){return'$'+n.toFixed(2)}
+function pct(n){return n.toFixed(1)+'%'}
+
+// ═══════════════════════ DATA HELPERS ═══════════════════════
+function getPlatillos(){
+  var p={};
+  S.recetas.forEach(function(r){
+    if(!p[r.platillo])p[r.platillo]={nombre:r.platillo,categoria:r.categoria,ingredientes:[]};
+    p[r.platillo].ingredientes.push({producto:r.ingrediente,cantidad:r.cantidad,unidad:r.unidad});
+  });
+  return p;
+}
+
+function getCosto(producto){
+  return S.costos.find(c=>c.producto.trim().toLowerCase()===producto.trim().toLowerCase());
+}
+
+function costoPlatillo(platillo){
+  var p=getPlatillos()[platillo];
+  if(!p)return{costo:0,completo:false,ingredientes:[]};
+  var total=0,completo=true,ings=[];
+  p.ingredientes.forEach(function(i){
+    var c=getCosto(i.producto);
+    var costoIng=c?(c.costoUnitario*i.cantidad):0;
+    if(!c)completo=false;
+    ings.push({producto:i.producto,cantidad:i.cantidad,costoUnit:c?c.costoUnitario:0,costoTotal:costoIng,tieneCosto:!!c});
+    total+=costoIng;
+  });
+  return{costo:total,completo:completo,ingredientes:ings};
+}
+
+function getPrecioVenta(platillo){
+  var p=S.precios.find(x=>x.platillo.trim().toLowerCase()===platillo.trim().toLowerCase());
+  return p?p.precioVenta:0;
+}
+
+function getMargen(platillo){
+  var cv=costoPlatillo(platillo).costo;
+  var pv=getPrecioVenta(platillo);
+  if(!pv)return{pctCosto:0,pctMargen:0,utilidad:0};
+  return{pctCosto:(cv/pv)*100,pctMargen:((pv-cv)/pv)*100,utilidad:pv-cv};
+}
+
+function getAllPlatillosCosteados(){
+  var platillos=getPlatillos();
+  return Object.keys(platillos).map(function(k){
+    var p=platillos[k];
+    var c=costoPlatillo(k);
+    var pv=getPrecioVenta(k);
+    var m=getMargen(k);
+    return{nombre:k,categoria:p.categoria,costo:c.costo,completo:c.completo,precioVenta:pv,pctCosto:m.pctCosto,pctMargen:m.pctMargen,utilidad:m.utilidad,ingredientes:c.ingredientes};
+  }).sort(function(a,b){return b.pctCosto-a.pctCosto});
+}
+
+function getCats(){return[...new Set(S.recetas.map(r=>r.categoria))].filter(Boolean).sort()}
+function getIngSinCosto(){
+  var ings=new Set();
+  S.recetas.forEach(r=>ings.add(r.ingrediente));
+  return[...ings].filter(i=>!getCosto(i)).sort();
+}
+
+// ═══════════════════════ RENDER ═══════════════════════
+function render(){document.getElementById('app').innerHTML=S.sheetId&&S.apiKey?renderMain():renderSetup();afterRender()}
+function switchTab(t){S.tab=t;S.searchQuery='';S.catFilter='todos';render()}
+function openModal(m){S.modal=m;render()}
+function closeModal(){S.modal=null;S.editCosto=null;render()}
+
+function renderSetup(){
+  return`<div style="padding:40px 20px;text-align:center">
+    <div style="font-size:48px;margin-bottom:16px">💲</div>
+    <h1 style="font-size:22px;margin-bottom:8px">Mozzafiato Costeo</h1>
+    <p style="color:var(--text2);margin-bottom:30px">Conecta al mismo Google Sheet de Producción</p>
+    <div class="form-group"><label class="form-label">Sheet ID</label>
+    <input class="form-input" id="sId" value="${S.sheetId}" placeholder="ID del Google Sheet"></div>
+    <div class="form-group"><label class="form-label">API Key</label>
+    <input class="form-input" id="sKey" value="${S.apiKey}" placeholder="Google API Key"></div>
+    <div class="form-group"><label class="form-label">Script URL (Apps Script)</label>
+    <input class="form-input" id="sUrl" value="${localStorage.getItem('scriptUrl')||''}" placeholder="URL del Apps Script"></div>
+    <button class="btn btn-primary" onclick="saveSetup()">🔗 Conectar</button>
+  </div>`;
+}
+
+function saveSetup(){
+  S.sheetId=$('sId').value.trim();S.apiKey=$('sKey').value.trim();
+  var url=$('sUrl').value.trim();
+  localStorage.setItem('sheetId',S.sheetId);localStorage.setItem('apiKey',S.apiKey);
+  localStorage.setItem('scriptUrl',url);
+  Sheets.loadAll();
+}
+
+function renderMain(){
+  var sc=S.connected?'connected':'';
+  var c='';
+  switch(S.tab){
+    case'home':c=renderHome();break;
+    case'costos':c=renderCostos();break;
+    case'platillos':c=renderPlatillos();break;
+    case'precios':c=renderPrecios();break;
+    case'simular':c=renderSimular();break;
+  }
+  return`<div class="status-bar"><div class="status-left"><div class="status-dot ${sc}"></div><span style="font-weight:700;font-size:15px">💲 Costeo</span></div><div class="status-right"><button class="config-btn" onclick="openModal('settings')">⚙️</button></div></div>
+  <div class="main-content" id="mc">${S.loading?'<div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div>':c}</div>
+  <nav class="bottom-nav">
+    <button class="nav-item ${S.tab==='home'?'active':''}" onclick="switchTab('home')"><span class="nav-icon">🏠</span>Inicio</button>
+    <button class="nav-item ${S.tab==='costos'?'active':''}" onclick="switchTab('costos')"><span class="nav-icon">💲</span>Costos</button>
+    <button class="nav-item ${S.tab==='platillos'?'active':''}" onclick="switchTab('platillos')"><span class="nav-icon">🍽️</span>Platillos</button>
+    <button class="nav-item ${S.tab==='precios'?'active':''}" onclick="switchTab('precios')"><span class="nav-icon">📋</span>Menú</button>
+    <button class="nav-item ${S.tab==='simular'?'active':''}" onclick="switchTab('simular')"><span class="nav-icon">🧮</span>Simular</button>
+  </nav>${renderModal()}`;
+}
+
+// ═══════════════════════ HOME ═══════════════════════
+function renderHome(){
+  var all=getAllPlatillosCosteados();
+  var conPrecio=all.filter(p=>p.precioVenta>0);
+  var sinCosto=getIngSinCosto();
+  var promedioMargen=conPrecio.length?conPrecio.reduce((s,p)=>s+p.pctMargen,0)/conPrecio.length:0;
+  var peligro=conPrecio.filter(p=>p.pctCosto>35);
+  var topRentables=conPrecio.filter(p=>p.completo).sort((a,b)=>b.pctMargen-a.pctMargen).slice(0,5);
+  var menosRentables=conPrecio.filter(p=>p.completo).sort((a,b)=>a.pctMargen-b.pctMargen).slice(0,5);
+
+  return`<div style="margin-bottom:14px"><span style="font-size:20px;font-weight:700">📊 Dashboard Costeo</span></div>
+  <div class="stats-grid">
+    <div class="stat-box purple"><div class="stat-number">${S.costos.length}</div><div class="stat-label">Ingredientes costeados</div></div>
+    <div class="stat-box orange"><div class="stat-number">${sinCosto.length}</div><div class="stat-label">Sin precio</div></div>
+    <div class="stat-box green"><div class="stat-number">${conPrecio.length}</div><div class="stat-label">Platillos con precio</div></div>
+    <div class="stat-box ${promedioMargen>=65?'green':promedioMargen>=50?'yellow':'red'}"><div class="stat-number">${pct(promedioMargen)}</div><div class="stat-label">Margen promedio</div></div>
+  </div>
+
+  ${peligro.length?`<div class="card"><div class="card-header"><span class="card-title">🚨 Costo MP &gt; 35%</span><span class="tag bad">${peligro.length}</span></div>
+  ${peligro.slice(0,5).map(p=>`<div class="cost-item"><div><div class="cost-name">${p.nombre}</div><div class="cost-sub">${p.categoria}</div></div><div><div class="cost-price" style="color:var(--red)">${pct(p.pctCosto)}</div><div class="cost-unit">costo MP</div></div></div>`).join('')}</div>`:''}
+
+  ${sinCosto.length?`<div class="card"><div class="card-header"><span class="card-title">⚠️ Ingredientes sin precio</span><span class="tag warn">${sinCosto.length}</span></div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px">${sinCosto.map(i=>`<span style="background:rgba(251,191,36,.1);color:var(--yellow);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer" onclick="openCostoModal('${i.replace(/'/g,"\\'")}')">${i}</span>`).join('')}</div></div>`:''}
+
+  ${topRentables.length?`<div class="card"><div class="card-header"><span class="card-title">🏆 Más Rentables</span></div>
+  ${topRentables.map((p,i)=>`<div class="cost-item"><div><div class="cost-name">${i+1}. ${p.nombre}</div><div class="cost-sub">Costo: ${money(p.costo)} → Venta: ${money(p.precioVenta)}</div></div><div><div class="cost-price" style="color:var(--green)">${pct(p.pctMargen)}</div><div class="cost-unit">margen</div></div></div>`).join('')}</div>`:''}
+
+  ${menosRentables.length?`<div class="card"><div class="card-header"><span class="card-title">📉 Menos Rentables</span></div>
+  ${menosRentables.map((p,i)=>`<div class="cost-item"><div><div class="cost-name">${i+1}. ${p.nombre}</div><div class="cost-sub">Costo: ${money(p.costo)} → Venta: ${money(p.precioVenta)}</div></div><div><div class="cost-price" style="color:${p.pctMargen<50?'var(--red)':'var(--yellow)'}">${pct(p.pctMargen)}</div><div class="cost-unit">margen</div></div></div>`).join('')}</div>`:''}
+
+  <button class="btn btn-secondary" onclick="Sheets.loadAll()" style="margin-top:8px">🔄 Actualizar datos</button>`;
+}
+
+// ═══════════════════════ COSTOS INGREDIENTES ═══════════════════════
+function renderCostos(){
+  var q=S.searchQuery.toLowerCase();
+  var items=S.costos.filter(c=>!q||c.producto.toLowerCase().includes(q));
+  var sinCosto=getIngSinCosto();
+
+  return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <span class="card-title" style="margin:0">💲 Costos de Ingredientes</span>
+    <button class="btn btn-primary btn-sm" onclick="openCostoModal()">+ Agregar</button>
+  </div>
+  <div class="search-bar"><span>🔍</span><input placeholder="Buscar ingrediente..." value="${S.searchQuery}" oninput="S.searchQuery=this.value;render()"></div>
+
+  ${sinCosto.length?`<div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:12px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:6px">⚠️ ${sinCosto.length} ingredientes sin precio</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px">${sinCosto.slice(0,10).map(i=>`<span style="background:rgba(251,191,36,.15);color:var(--yellow);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer" onclick="openCostoModal('${i.replace(/'/g,"\\'")}')">${i}</span>`).join('')}${sinCosto.length>10?`<span style="color:var(--text2);font-size:11px;padding:3px">+${sinCosto.length-10} más</span>`:''}</div></div>`:''}
+
+  ${items.length===0?'<div class="empty-state"><div class="empty-icon">💲</div><p>Sin costos registrados</p></div>':
+  items.map(c=>`<div class="cost-item" onclick="editCosto('${c.producto.replace(/'/g,"\\'")}')">
+    <div><div class="cost-name">${c.producto}</div><div class="cost-sub">${c.unidadCompra} · Compra: ${money(c.precioCompra)} x${c.cantidadPack}</div></div>
+    <div><div class="cost-price" style="color:var(--accent)">${money(c.costoUnitario)}</div><div class="cost-unit">por unidad</div></div>
+  </div>`).join('')}`;
+}
+
+function openCostoModal(prod){
+  S.editCosto=prod?getCosto(prod):null;
+  S.modal='costo';
+  render();
+  if(prod&&!S.editCosto){setTimeout(()=>{var el=$('fcProd');if(el)el.value=prod},50)}
+}
+
+function editCosto(prod){
+  S.editCosto=getCosto(prod);
+  S.modal='costo';
+  render();
+}
+
+// ═══════════════════════ PLATILLOS COSTEADOS ═══════════════════════
+function renderPlatillos(){
+  var q=S.searchQuery.toLowerCase();
+  var cats=getCats();
+  var all=getAllPlatillosCosteados();
+  if(S.catFilter!=='todos')all=all.filter(p=>p.categoria===S.catFilter);
+  if(q)all=all.filter(p=>p.nombre.toLowerCase().includes(q));
+
+  return`<div style="margin-bottom:14px"><span class="card-title" style="margin:0">🍽️ Costeo por Platillo</span></div>
+  <div class="search-bar"><span>🔍</span><input placeholder="Buscar platillo..." value="${S.searchQuery}" oninput="S.searchQuery=this.value;render()"></div>
+  <div class="pills"><span class="pill ${S.catFilter==='todos'?'active':''}" onclick="S.catFilter='todos';render()">Todos (${getAllPlatillosCosteados().length})</span>${cats.map(c=>{var n=getAllPlatillosCosteados().filter(p=>p.categoria===c).length;return`<span class="pill ${S.catFilter===c?'active':''}" onclick="S.catFilter='${c}';render()">${c} (${n})</span>`}).join('')}</div>
+
+  ${all.length===0?'<div class="empty-state"><div class="empty-icon">🍽️</div><p>Sin platillos</p></div>':
+  all.map(p=>{
+    var tagCl=!p.precioVenta?'warn':p.pctCosto>35?'bad':p.pctCosto>28?'warn':'ok';
+    var tagTxt=!p.precioVenta?'SIN PRECIO':p.pctCosto>35?pct(p.pctCosto)+' MP':pct(p.pctCosto)+' MP';
+    return`<div class="card" style="padding:14px;margin-bottom:10px;cursor:pointer" onclick="openModal('detalle');S._detalle='${p.nombre.replace(/'/g,"\\'")}';render()">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1"><div style="font-size:14px;font-weight:700">${p.completo?'':'⚠️ '}${p.nombre}</div>
+        <div style="font-size:11px;color:var(--text2)">${p.categoria} · ${p.ingredientes.length} ingredientes</div></div>
+        <span class="tag ${tagCl}">${tagTxt}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:13px">
+        <span>Costo: <strong style="color:var(--accent)">${money(p.costo)}</strong></span>
+        ${p.precioVenta?`<span>Venta: <strong>${money(p.precioVenta)}</strong></span><span>Utilidad: <strong style="color:${p.utilidad>0?'var(--green)':'var(--red)'}">${money(p.utilidad)}</strong></span>`:'<span style="color:var(--yellow)">Sin precio de venta</span>'}
+      </div>
+      ${p.precioVenta?`<div class="meter"><div class="meter-fill" style="width:${Math.min(p.pctCosto,100)}%;background:${p.pctCosto>35?'var(--red)':p.pctCosto>28?'var(--yellow)':'var(--green)'}"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-top:4px"><span>0%</span><span>28%</span><span>35%</span><span>Costo MP →</span></div>`:''}
+    </div>`}).join('')}`;
+}
+
+// ═══════════════════════ PRECIOS MENÚ ═══════════════════════
+function renderPrecios(){
+  var q=S.searchQuery.toLowerCase();
+  var platillos=getPlatillos();
+  var keys=Object.keys(platillos).sort();
+  if(S.catFilter!=='todos')keys=keys.filter(k=>platillos[k].categoria===S.catFilter);
+  if(q)keys=keys.filter(k=>k.toLowerCase().includes(q));
+  var cats=getCats();
+  var sinPrecio=keys.filter(k=>!getPrecioVenta(k));
+
+  return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <span class="card-title" style="margin:0">📋 Precios de Menú</span>
+    <button class="btn btn-primary btn-sm" onclick="openModal('addPrecio')">+ Precio</button>
+  </div>
+  <div class="search-bar"><span>🔍</span><input placeholder="Buscar..." value="${S.searchQuery}" oninput="S.searchQuery=this.value;render()"></div>
+  <div class="pills"><span class="pill ${S.catFilter==='todos'?'active':''}" onclick="S.catFilter='todos';render()">Todos</span>${cats.map(c=>`<span class="pill ${S.catFilter===c?'active':''}" onclick="S.catFilter='${c}';render()">${c}</span>`).join('')}</div>
+
+  ${sinPrecio.length?`<div style="background:rgba(251,191,36,.08);border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--yellow)">⚠️ ${sinPrecio.length} platillos sin precio de venta</div>`:''}
+
+  ${keys.map(k=>{
+    var p=platillos[k];var pv=getPrecioVenta(k);var c=costoPlatillo(k);var m=getMargen(k);
+    return`<div class="cost-item" onclick="openPrecioModal('${k.replace(/'/g,"\\'")}')">
+      <div style="flex:1"><div class="cost-name">${k}</div><div class="cost-sub">${p.categoria} · Costo: ${money(c.costo)}</div></div>
+      <div>${pv?`<div class="cost-price">${money(pv)}</div><div class="cost-unit" style="color:${m.pctMargen>=65?'var(--green)':m.pctMargen>=50?'var(--yellow)':'var(--red)'}">${pct(m.pctMargen)} margen</div>`:'<div class="cost-price" style="color:var(--yellow)">---</div><div class="cost-unit">sin precio</div>'}</div>
+    </div>`}).join('')}`;
+}
+
+// ═══════════════════════ SIMULADOR ═══════════════════════
+function renderSimular(){
+  return`<div style="margin-bottom:14px"><span class="card-title" style="margin:0">🧮 Simulador de Precios</span></div>
+  <div class="card">
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px">Calcular precio de venta</div>
+    <div class="form-group"><label class="form-label">Costo del platillo ($)</label>
+    <input class="form-input" id="simCosto" type="number" inputmode="decimal" step="0.01" placeholder="0.00" oninput="calcSim()"></div>
+    <div class="form-group"><label class="form-label">% Costo MP deseado</label>
+    <input class="form-input" id="simPct" type="number" inputmode="decimal" value="30" step="1" min="1" max="100" oninput="calcSim()"></div>
+    <div id="simResult"></div>
+  </div>
+  <div class="card">
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px">¿Qué pasa si sube un ingrediente?</div>
+    <div class="form-group"><label class="form-label">Ingrediente</label>
+    <select class="form-select" id="simIng" onchange="calcImpacto()"><option value="">Seleccionar...</option>${S.costos.map(c=>`<option value="${c.producto}">${c.producto} (${money(c.costoUnitario)}/u)</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label">% de aumento</label>
+    <input class="form-input" id="simAum" type="number" inputmode="decimal" value="20" step="5" oninput="calcImpacto()"></div>
+    <div id="impactoResult"></div>
+  </div>`;
+}
+
+function calcSim(){
+  var costo=parseFloat($('simCosto')?.value)||0;
+  var pctMP=parseFloat($('simPct')?.value)||30;
+  var el=$('simResult');if(!el||!costo)return el?el.innerHTML='':'';
+  var precio=costo/(pctMP/100);
+  var utilidad=precio-costo;
+  el.innerHTML=`<div style="background:var(--surface2);border-radius:12px;padding:16px;margin-top:12px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--text2)">Precio sugerido:</span><strong style="font-family:'Space Mono';font-size:20px;color:var(--accent)">${money(precio)}</strong></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Utilidad bruta:</span><strong style="color:var(--green)">${money(utilidad)}</strong></div>
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Margen:</span><strong style="color:var(--green)">${pct(100-pctMP)}</strong></div>
+    <div style="margin-top:10px;font-size:11px;color:var(--text2)">
+      Al 25%: ${money(costo/0.25)} · Al 30%: ${money(costo/0.30)} · Al 35%: ${money(costo/0.35)}
+    </div>
+  </div>`;
+}
+
+function calcImpacto(){
+  var ing=$('simIng')?.value;var aum=parseFloat($('simAum')?.value)||0;
+  var el=$('impactoResult');if(!el||!ing||!aum){if(el)el.innerHTML='';return}
+  var c=getCosto(ing);if(!c)return;
+  var nuevoUnit=c.costoUnitario*(1+aum/100);
+  var platillos=getPlatillos();var afectados=[];
+  Object.keys(platillos).forEach(function(k){
+    var p=platillos[k];
+    p.ingredientes.forEach(function(i){
+      if(i.producto.trim().toLowerCase()===ing.trim().toLowerCase()){
+        var costoViejo=costoPlatillo(k).costo;
+        var diff=(nuevoUnit-c.costoUnitario)*i.cantidad;
+        var costoNuevo=costoViejo+diff;
+        var pv=getPrecioVenta(k);
+        afectados.push({nombre:k,costoViejo:costoViejo,costoNuevo:costoNuevo,diff:diff,precioVenta:pv,pctViejo:pv?(costoViejo/pv*100):0,pctNuevo:pv?(costoNuevo/pv*100):0});
+      }
+    });
+  });
+  afectados.sort((a,b)=>b.diff-a.diff);
+  el.innerHTML=`<div style="background:var(--surface2);border-radius:12px;padding:16px;margin-top:12px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">${ing}: ${money(c.costoUnitario)} → ${money(nuevoUnit)} (+${pct(aum)})</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:10px">${afectados.length} platillos afectados</div>
+    ${afectados.slice(0,10).map(a=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">
+      <span style="flex:1">${a.nombre}</span>
+      <span style="color:var(--red)">+${money(a.diff)}</span>
+      ${a.precioVenta?`<span style="margin-left:8px;color:${a.pctNuevo>35?'var(--red)':'var(--text2)'}">${pct(a.pctNuevo)} MP</span>`:''}</div>`).join('')}
+  </div>`;
+}
+
+// ═══════════════════════ MODALS ═══════════════════════
+function renderModal(){
+  if(!S.modal)return'';
+  var c='';
+  switch(S.modal){
+    case'costo':c=fmCosto();break;
+    case'addPrecio':c=fmPrecio();break;
+    case'editPrecio':c=fmPrecio();break;
+    case'detalle':c=fmDetalle();break;
+    case'settings':c=fmSettings();break;
+  }
+  return`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal-body">${c}</div></div>`;
+}
+function afterRender(){if(S.modal==='costo')setTimeout(initCostoListeners,50)}
+
+function fmCosto(){
+  var e=S.editCosto;
+  var prods=S.catalogo.map(p=>p.producto).sort();
+  return`<div class="modal-title">${e?'✏️ Editar':'➕ Agregar'} Costo</div>
+  <div class="form-group"><label class="form-label">Ingrediente</label>
+  ${e?`<input class="form-input" id="fcProd" value="${e.producto}" readonly style="opacity:.7">`:`<select class="form-select" id="fcProd"><option value="">Seleccionar...</option>${prods.map(p=>`<option value="${p}">${p}</option>`).join('')}</select>`}</div>
+  <div class="form-group"><label class="form-label">Unidad de compra (ej: Kg, Pza, Lt, Paquete)</label>
+  <input class="form-input" id="fcUnidad" value="${e?e.unidadCompra:''}" placeholder="Kg"></div>
+  <div class="form-group"><label class="form-label">Precio de compra ($)</label>
+  <input class="form-input" id="fcPrecio" type="number" inputmode="decimal" step="0.01" value="${e?e.precioCompra:''}" placeholder="0.00"></div>
+  <div class="form-group"><label class="form-label">Cantidad por compra (ej: 1 Kg = 1, paquete 12 = 12)</label>
+  <input class="form-input" id="fcCant" type="number" inputmode="decimal" step="0.01" value="${e?e.cantidadPack:'1'}" placeholder="1"></div>
+  <div id="costoPreview" style="margin-bottom:16px"></div>
+  <button class="btn btn-success" onclick="saveCosto()">✅ ${e?'Actualizar':'Guardar'}</button>
+  <div style="height:10px"></div>
+  <button class="btn btn-secondary" onclick="closeModal()">✖ Cerrar</button>`;
+}
+function initCostoListeners(){
+  var a=$('fcPrecio');var b=$('fcCant');
+  if(a)a.addEventListener('input',previewCosto);
+  if(b)b.addEventListener('input',previewCosto);
+  previewCosto();
+}
+
+function previewCosto(){
+  var precio=parseFloat($('fcPrecio')?.value)||0;
+  var cant=parseFloat($('fcCant')?.value)||1;
+  var el=$('costoPreview');
+  if(!el)return;
+  if(precio>0){
+    var unit=precio/cant;
+    el.innerHTML=`<div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:12px;color:var(--text2)">Costo unitario:</div>
+      <div style="font-family:'Space Mono';font-size:24px;font-weight:700;color:var(--accent)">${money(unit)}</div></div>`;
+  }else{el.innerHTML=''}
+}
+
+async function saveCosto(){
+  var prod=$('fcProd')?.value?.trim();
+  var unidad=$('fcUnidad')?.value?.trim()||'Pza';
+  var precio=parseFloat($('fcPrecio')?.value)||0;
+  var cant=parseFloat($('fcCant')?.value)||1;
+  if(!prod||!precio){toast('Completa los campos',1);return}
+  var costoUnit=precio/cant;
+
+  // Si ya existe, borrar fila vieja
+  var oldIdx=-1;
+  S.costos.forEach(function(c,i){if(c.producto.trim().toLowerCase()===prod.trim().toLowerCase())oldIdx=i});
+  if(oldIdx>=0){
+    try{await Sheets.deleteRow('💲 Costos',oldIdx+2)}catch(e){}
+  }
+
+  try{
+    await Sheets.append('💲 Costos',[prod,unidad,precio,cant,costoUnit,today()]);
+    toast('✅ Costo de '+prod+' guardado');
+    closeModal();Sheets.loadAll();
+  }catch(e){toast('Error al guardar',1)}
+}
+
+function fmPrecio(){
+  var platillos=getPlatillos();
+  var keys=Object.keys(platillos).sort();
+  return`<div class="modal-title">💲 Asignar Precio de Venta</div>
+  <div class="form-group"><label class="form-label">Platillo</label>
+  <select class="form-select" id="fpPlat" onchange="showCostoPrecio()"><option value="">Seleccionar...</option>${keys.map(k=>`<option value="${k}">${k}</option>`).join('')}</select></div>
+  <div id="fpCostoInfo"></div>
+  <div class="form-group"><label class="form-label">Precio de venta ($)</label>
+  <input class="form-input" id="fpPrecio" type="number" inputmode="decimal" step="0.5" placeholder="0.00" oninput="showCostoPrecio()"></div>
+  <div id="fpMargenInfo"></div>
+  <button class="btn btn-success" onclick="savePrecio()">✅ Guardar Precio</button>
+  <div style="height:10px"></div>
+  <button class="btn btn-secondary" onclick="closeModal()">✖ Cerrar</button>`;
+}
+
+function openPrecioModal(plat){
+  S.modal='editPrecio';
+  render();
+  setTimeout(function(){
+    var el=$('fpPlat');if(el){el.value=plat}
+    var pv=getPrecioVenta(plat);
+    var elP=$('fpPrecio');if(elP&&pv)elP.value=pv;
+    showCostoPrecio();
+  },50);
+}
+
+function showCostoPrecio(){
+  var plat=$('fpPlat')?.value;var el=$('fpCostoInfo');var el2=$('fpMargenInfo');
+  if(!plat){if(el)el.innerHTML='';if(el2)el2.innerHTML='';return}
+  var c=costoPlatillo(plat);
+  if(el)el.innerHTML=`<div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:16px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px">📦 Costo materia prima: <span style="color:var(--accent)">${money(c.costo)}</span></div>
+    ${c.ingredientes.map(i=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:${i.tieneCosto?'var(--text)':'var(--yellow)'}">
+      <span>${i.tieneCosto?'':'⚠️ '}${i.producto} x${i.cantidad}</span><span>${i.tieneCosto?money(i.costoTotal):'sin costo'}</span></div>`).join('')}
+    ${!c.completo?'<div style="font-size:11px;color:var(--yellow);margin-top:6px">⚠️ Costo incompleto — faltan precios de ingredientes</div>':''}
+  </div>`;
+
+  var pv=parseFloat($('fpPrecio')?.value)||0;
+  if(el2&&pv>0){
+    var pctMP=(c.costo/pv)*100;
+    var margen=((pv-c.costo)/pv)*100;
+    var cl=pctMP>35?'var(--red)':pctMP>28?'var(--yellow)':'var(--green)';
+    el2.innerHTML=`<div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span>% Costo MP:</span><strong style="color:${cl}">${pct(pctMP)}</strong></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span>Margen bruto:</span><strong style="color:var(--green)">${pct(margen)}</strong></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px"><span>Utilidad:</span><strong style="color:var(--green)">${money(pv-c.costo)}</strong></div>
+      <div class="meter" style="margin-top:8px"><div class="meter-fill" style="width:${Math.min(pctMP,100)}%;background:${cl}"></div></div>
+      <div style="font-size:10px;color:var(--text2);margin-top:4px;text-align:center">${pctMP>35?'🚨 Costo MP alto — revisar precio o receta':pctMP>28?'⚠️ Costo MP en zona de atención':'✅ Margen saludable'}</div>
+    </div>`;
+  }else if(el2){el2.innerHTML=''}
+}
+
+async function savePrecio(){
+  var plat=$('fpPlat')?.value?.trim();
+  var precio=parseFloat($('fpPrecio')?.value)||0;
+  if(!plat||!precio){toast('Completa los campos',1);return}
+  var cat=getPlatillos()[plat]?.categoria||'';
+
+  var oldIdx=-1;
+  S.precios.forEach(function(p,i){if(p.platillo.trim().toLowerCase()===plat.trim().toLowerCase())oldIdx=i});
+  if(oldIdx>=0){try{await Sheets.deleteRow('📋 Precios Menú',oldIdx+2)}catch(e){}}
+
+  try{
+    await Sheets.append('📋 Precios Menú',[plat,cat,precio,'SI']);
+    toast('✅ Precio de '+plat+' guardado');
+    closeModal();Sheets.loadAll();
+  }catch(e){toast('Error al guardar',1)}
+}
+
+function fmDetalle(){
+  var nombre=S._detalle||'';
+  var platillos=getPlatillos();
+  var p=platillos[nombre];
+  if(!p)return'<div class="modal-title">Error</div>';
+  var c=costoPlatillo(nombre);
+  var pv=getPrecioVenta(nombre);
+  var m=getMargen(nombre);
+
+  return`<div class="modal-title">🍽️ ${nombre}</div>
+  <div style="text-align:center;margin-bottom:16px"><span class="tag ${!pv?'warn':m.pctCosto>35?'bad':'ok'}">${p.categoria}</span></div>
+  <div style="background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">
+      <div><div style="font-size:11px;color:var(--text2)">Costo MP</div><div style="font-family:'Space Mono';font-size:18px;font-weight:700;color:var(--accent)">${money(c.costo)}</div></div>
+      <div><div style="font-size:11px;color:var(--text2)">Precio Venta</div><div style="font-family:'Space Mono';font-size:18px;font-weight:700">${pv?money(pv):'---'}</div></div>
+      <div><div style="font-size:11px;color:var(--text2)">Utilidad</div><div style="font-family:'Space Mono';font-size:18px;font-weight:700;color:${m.utilidad>0?'var(--green)':'var(--red)'}">${pv?money(m.utilidad):'---'}</div></div>
+    </div>
+    ${pv?`<div class="meter" style="margin-top:12px"><div class="meter-fill" style="width:${Math.min(m.pctCosto,100)}%;background:${m.pctCosto>35?'var(--red)':m.pctCosto>28?'var(--yellow)':'var(--green)'}"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:6px"><span>Costo MP: ${pct(m.pctCosto)}</span><span>Margen: ${pct(m.pctMargen)}</span></div>`:''}
+  </div>
+  <div class="card" style="margin-bottom:16px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">📦 Desglose de ingredientes</div>
+  ${c.ingredientes.map(i=>{
+    var pctIng=c.costo>0?((i.costoTotal/c.costo)*100):0;
+    return`<div class="detail-row"><span>${i.tieneCosto?'':'⚠️ '}${i.producto} ×${i.cantidad}</span><div style="text-align:right"><div style="font-weight:600">${i.tieneCosto?money(i.costoTotal):'sin costo'}</div>${i.tieneCosto&&c.costo>0?`<div style="font-size:10px;color:var(--text2)">${pct(pctIng)} del costo</div>`:''}</div></div>`}).join('')}
+  <div class="detail-row" style="font-weight:700;border-top:2px solid rgba(255,255,255,.08);padding-top:10px"><span>TOTAL COSTO MP</span><span style="color:var(--accent)">${money(c.costo)}</span></div></div>
+
+  ${!pv?`<button class="btn btn-primary" onclick="closeModal();openPrecioModal('${nombre.replace(/'/g,"\\'")}')">💲 Asignar Precio de Venta</button><div style="height:10px"></div>`:''}
+  <button class="btn btn-secondary" onclick="closeModal()">✖ Cerrar</button>`;
+}
+
+function fmSettings(){
+  return`<div class="modal-title">⚙️ Configuración</div>
+  <div class="form-group"><label class="form-label">Sheet ID</label>
+  <input class="form-input" id="sId" value="${S.sheetId}"></div>
+  <div class="form-group"><label class="form-label">API Key</label>
+  <input class="form-input" id="sKey" value="${S.apiKey}"></div>
+  <div class="form-group"><label class="form-label">Script URL</label>
+  <input class="form-input" id="sUrl" value="${localStorage.getItem('scriptUrl')||''}"></div>
+  <button class="btn btn-primary" onclick="saveSetup();closeModal()">💾 Guardar</button>
+  <div style="height:10px"></div>
+  <button class="btn btn-secondary" style="background:rgba(248,113,113,.15);color:var(--red)" onclick="localStorage.clear();location.reload()">🗑️ Borrar datos locales</button>
+  <div style="height:10px"></div>
+  <button class="btn btn-secondary" onclick="closeModal()">✖ Cerrar</button>`;
+}
+
+// ═══════════════════════ INIT ═══════════════════════
+render();
+if(S.sheetId&&S.apiKey)Sheets.loadAll();
+</script>
+</body>
+</html>
